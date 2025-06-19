@@ -1,34 +1,15 @@
-
 const mysql = require('mysql2/promise'); // promise for async/await 
-const {Sequelize} = require('sequelize');
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST,
-        dialect: 'mysql',
-        port: process.env.DB_PORT || 3306,
-        logging: msg =>{
-            //只輸出SQL與據
-            if (msg.startsWith('Executing')){
-                console.log(`[SQL] ${new Date().toISOString()} - ${msg}`);
-            }
-        },
-        pool: {
-            // 最多連結數
-            max: 5,
-            //最少空閒數
-            min: 0,
-            //獲取連結的最大等待時間(毫秒)
-            acquire: 60000
-
-        }
+const dbConfig = {
+    host: process.env.DB_HOST,
+    user:process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0    
-);
+}
 //pool只希望被建立一次, 建一次要很久
 let pool;
 
