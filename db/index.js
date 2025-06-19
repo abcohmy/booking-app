@@ -22,7 +22,7 @@ const sequelize = new Sequelize(
             //最少空閒數
             min: 0,
             //獲取連結的最大等待時間(毫秒)
-            acquire: 60000
+            acquire: 60000,
             //閒置狀態最大時間(毫秒)
             idle:60000
         },
