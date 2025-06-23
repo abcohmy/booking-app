@@ -12,7 +12,8 @@ const Booking = sequelize.define('Booking', {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-            notEmpty:true
+            notEmpty:true,
+            len: [3, 50]
         }
     },
     phone: {
@@ -51,6 +52,6 @@ const Booking = sequelize.define('Booking', {
 });
 
 //有foreignKey(此是profile_id = user_id)用
-Booking.belongsTo(User, {foreignKey: 'userId'});
+Booking.belongsTo(User, {foreignKey: 'profile_id'});
 
 module.exports = Booking;

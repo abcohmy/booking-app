@@ -18,7 +18,8 @@ const User = sequelize.define('User', {
         //資料完整性的後端防線
         validate:{
             //檢查是否為空字串'' DataTypes.STRING 用
-            notEmpty: true
+            notEmpty: true,
+            len: [3, 50]
         }
     },
 
@@ -26,7 +27,8 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING, 
         allowNull:false,
         validate:{
-            notEmpty: true
+            notEmpty: true,
+            len: [8, 20]
         }
     },
 
@@ -62,6 +64,9 @@ bcrypt 密碼處理:
 salt: Salt 是一個隨機生成的字串，與原始密碼混合後再進行hash運算(單向的加密運算)。
 
 */
+
+//matchPassword是自己創的 所以要用prototype前綴表明是自創 然後才能給其他程式用
+// 因為用的是sequelize現成的class所以要加function只能外加
 
 User.prototype.matchPassword = async function(enterPassword){
     return await bcrypt.compare(enterPassword, this.password);

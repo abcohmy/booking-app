@@ -28,11 +28,9 @@ const sequelize = new Sequelize(
         },
         //舊版本MYSQL需要
         dialectOptions: {},
-        timezone: '+08:00' // 台灣時區
+        timezone: '+08:00' // 台灣時區, 只在讀取時有用 存還是用不帶時區的UTC怕出錯
     }
 );
-//pool只希望被建立一次, 建一次要很久
-let pool;
 
 async function initializeDb() {
     try {

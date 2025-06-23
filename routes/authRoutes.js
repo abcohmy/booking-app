@@ -7,14 +7,14 @@ const User = require('../models/userModel');
 const {registerSchema} = require('../schema/userSchema');
 
 /* JSON Web Token : 無狀態 (stateless) 的身份驗證/有狀態的話會需要多存很多用戶資訊
-    {id, role} => 看該token包含哪些資訊 此範例設定在User裡
+    {user_id, role} => 看該token包含哪些資訊 此範例設定在User裡
     process.env.JWT_SECRET => 在伺服器設定(.env2等)的金鑰, 會被jwt.sign()生成JWT字串, 
         加這串是保護驗證安全, 不然別人有相同的其他資訊就能偽造任意身分
     { expiresIn: '1h' } => 一小時候token 過期
 */
 
 const generateToken = (user_id, role) => {
-    return jwt.sign({id, role}, process.env.JWT_SECRET, {
+    return jwt.sign({user_id, role}, process.env.JWT_SECRET, {
         expiresIn: '1h'
     });
 };
