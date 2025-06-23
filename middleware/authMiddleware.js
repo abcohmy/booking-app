@@ -35,6 +35,27 @@ const authMiddleware = async (req, res, next) =>{
     }
 };
 
+const optionalAuthMiddleware = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    // 授權沒過就當作沒登入，所以不報錯
+    if (authHeader && authHeader.startsWith('Bearer ')){
+        const token = authHeader.split(' ')[1];
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            const user = await User.findByPk(decoded.user_id, {
+                attributes: {exclude: ['password']}
+            });
+            if (user) req.user = user;
+
+        } catch (error){
+            //token無效當作沒登入
+        }
+    }
+    next();
+};
+
+
+
 // ...roles是 JS的剩餘參數語法，可塞任意參數使其成為一個陣列
 const authorizeRoles = (...roles) => {
     //給router用的中介function所以以router內的req, res來當參數
@@ -50,4 +71,4 @@ const authorizeRoles = (...roles) => {
 
 };
 
-module.exports = {authMiddleware, authorizeRoles};
+module.exports = {authMiddleware, optionalAuthMiddleware, authorizeRoles};
