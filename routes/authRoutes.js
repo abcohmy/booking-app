@@ -53,9 +53,10 @@ router.post('/login', async (req, res) => {
     if (error){
         return res.status(400).json({message: error.details[0].message})
     }
-
+    //key 與變數(給value的變數)名稱一致，就能縮寫
     const { username, password} = value;
     try {
+        //key 與變數(給value的變數)名稱一致，就能縮寫
         const user = await User.findOne( {where: { username }});
 
         if (!user) {

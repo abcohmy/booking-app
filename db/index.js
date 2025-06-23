@@ -51,25 +51,10 @@ async function initializeDb() {
 
 }
 
-async function  query(sql, params = []) {
-    let connection; // finally要用到 寫外面
-    try {
-        connection = await pool.getConnection();
-        //sql輸出的是操作結果
-        const [rows] = await connection.execute(sql, params);
-        return rows;
-    } catch (error) {
-        console.error('資料庫查詢錯誤:', error);
-        throw error;
-    // 執行完try/或跳error 都會執行finally 用在有跳躍式return, break, continue, goto等
-    } finally {
-        if (connection) connection.release();
-    }
-}
 
 module.exports = {
-    initializeDb, 
-    query
+    sequelize,
+    initializeDb
 };
 
 

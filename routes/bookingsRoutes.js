@@ -1,5 +1,5 @@
 // @ts-check
-//預定在 http://localhost:port/bookings
+//預定在 http://localhost:port/api/bookings
 const express = require('express');
 const router = express.Router(); 
 const {authMiddleware, optionalAuthMiddleware, authorizeRoles} = require('../middleware/authMiddleware');
@@ -108,7 +108,7 @@ router.delete('/:id', authMiddleware, authorizeRoles('admin'), async (req, res) 
     const { id } = req.params;
 
     try {
-        const deletedRows = await Booking ({
+        const deletedRows = await Booking.destroy ({
             where: {id}
         })
         //檢查有沒有刪除"行為"
