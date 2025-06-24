@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const jwt = requore('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
 //schema:拒絕不合理的用戶輸入/減少DB負擔
-const {registerSchema} = require('../schema/userSchema');
+const {loginSchema, registerSchema} = require('../schema/userSchema');
 
 /* JSON Web Token : 無狀態 (stateless) 的身份驗證/有狀態的話會需要多存很多用戶資訊
     {user_id, role} => 看該token包含哪些資訊 此範例設定在User裡
@@ -38,6 +38,13 @@ router.post('/register', async (req, res) => {
 
         // post => sequelize 的create 
         const user = await User.create({ username, password, role });
+
+        //不回傳結果，用戶端會卡住loading
+        return res.status(201).json({
+            message: '使用者註冊成功。',
+            user: { user_id: user.user_id, username: user.username, role: user.role}
+        });
+
     } catch (error){
         console.error('註冊失敗:', error);
         res.status(500).json({message: '伺服器錯誤:' + error.message});
@@ -48,7 +55,7 @@ router.post('/register', async (req, res) => {
 //POST: 提交資料=>建立新資源/進行處理或操作
 //改變伺服器狀態的應用post， GET用在沒有其他處理或操作的地方
 router.post('/login', async (req, res) => {
-    const {error, value} = registerSchema.validate(req.body);
+    const {error, value} = loginSchema.validate(req.body);
     
     if (error){
         return res.status(400).json({message: error.details[0].message})
@@ -64,9 +71,12 @@ router.post('/login', async (req, res) => {
         }
         //matchPassword is in userModel
         if (await user.matchPassword(password)){
-            res.json({
+            res.status(200).json({
+                message: '登入成功。',
+                user: {
                 user_id:user.user_id,
-                role: user.role,
+                role: user.role
+                },
                 token: generateToken(user.user_id, user.role)
             });
         } else{

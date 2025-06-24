@@ -19,7 +19,7 @@ const User = sequelize.define('User', {
         validate:{
             //檢查是否為空字串'' DataTypes.STRING 用
             notEmpty: true,
-            len: [3, 50]
+            len: [3, 255]
         }
     },
 

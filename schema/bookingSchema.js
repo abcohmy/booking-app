@@ -1,13 +1,13 @@
 
-const Joi = required('joi');
+const Joi = require('joi');
 
 const bookingSchema = Joi.object({
-    name: Joi.string().required.min(3).messages({
-        'string.base': '使用者名稱必須是文字格式',
-        'string.empty': '姓名不能為空',
-        'string.min': '使用者名稱最少要3個字元',
-        'string.max': '使用者名稱最多不能超過50個字元',
-        'any.required': '使用者名稱是必填欄位'
+    name: Joi.string().min(1).max(255).required().messages({
+        'string.base': '預訂者名稱必須是文字格式',
+        'string.empty': '預訂者姓名不能為空',
+        'string.min': '預訂者姓名不能為空',
+        'string.max': '預訂者名稱最多不能超過255個字元',
+        'any.required': '預訂者名稱是必填欄位'
     }),
 
     phone: Joi.string().pattern(/^09[0-9]{8}$/).required().messages({
@@ -27,4 +27,4 @@ const bookingSchema = Joi.object({
     profile_id: Joi.number().integer().allow(null)
 })
 
-Module.exports = {bookingSchema};
+module.exports = {bookingSchema};

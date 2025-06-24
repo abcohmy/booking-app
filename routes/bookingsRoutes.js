@@ -1,10 +1,9 @@
-// @ts-check
 //預定在 http://localhost:port/api/bookings
 const express = require('express');
 const router = express.Router(); 
 const {authMiddleware, optionalAuthMiddleware, authorizeRoles} = require('../middleware/authMiddleware');
 const Booking = require('../models/bookingModel');
-
+const {bookingSchema} = require('../schema/bookingSchema');
 
 router.get('/', optionalAuthMiddleware, async (req, res) => {
     let attributes;
@@ -31,9 +30,16 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
 });
 
 router.post('/', optionalAuthMiddleware, async (req, res) => {
+    const { error, value}= bookingSchema.validate(req.body);
+
+    if (error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+
+
     //這種解構模式是取得該key的value 
     //不想與key值同變數名稱可改const { name: userName, phone, booking_time } = req.body;
-    const { name, phone, booking_time } = req.body;
+    const { name, phone, booking_time } = value;
 
     try {
         const newBooking = await Booking.create ({ // Sequelize: create
@@ -63,34 +69,38 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
 
 // 拿來改SQL PUT PATCH用起來差不多
 router.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, res) => {
-    const {id} = req.params;
-    const {name, phone, booking_time, status} = req.body;
+    const {error, value} = bookingSchema.validate(req.body);
+
+    if (error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+
+    const booking_id = req.params.id;
+    const {name, phone, booking_time, status} = value;
 
     try {
-        const booking = await Booking.findByPk(id);
+        const booking = await Booking.findByPk(booking_id);
         if (!booking){
             return res.status(404).json({message: '預約未找到'});
         }
 
         //sequelize update回傳一組資料 其中第一個是更新數(在此自己設定成affectedCount)
         // JavaScript 陣列解構賦值可只取第一個，剩下拋棄
-        const [affectedCount] = await Booking.update({
+        //要確認更新得用.change 才能確認有沒有被更動
+        await Booking.update({
             name,
             phone,
             booking_time,
             status
         },{
-            where: {id}
+            where: {booking_id}
         })
 
 
-        // affectedCount在檢查資料庫 UPDATE 操作的結果
-        if (affectedCount  === 0){
-            return res.status(400).json({message: `更新失敗或沒有數據修改。`});
-        }
+
         
         //不重取的話使用者看到的還是舊資料(更改的結果存在DB)，所以重取讓使用者看到更改的資料
-        const updatedBooking = await Booking.findByPk(id);
+        const updatedBooking = await Booking.findByPk(booking_id);
         res.json(updatedBooking);
     } catch (error) {
         console.error('更新預約資料失敗:', error);
@@ -105,11 +115,11 @@ router.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, res) => {
 
 
 router.delete('/:id', authMiddleware, authorizeRoles('admin'), async (req, res) => {
-    const { id } = req.params;
+    const booking_id = req.params.id;
 
     try {
         const deletedRows = await Booking.destroy ({
-            where: {id}
+            where: {booking_id}
         })
         //檢查有沒有刪除"行為"
         if (deletedRows === 0){

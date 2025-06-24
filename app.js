@@ -6,7 +6,7 @@ const port = process.env.PORT || 5000;
 const express = require('express');
 const cors = require('cors');
 
-const {initializeDb} = require('./db/index');
+const {initializeDb} = require('./db');
 const User = require('./models/userModel');
 const Booking = require('./models/bookingModel');
 const authRoutes = require('./routes/authRoutes');

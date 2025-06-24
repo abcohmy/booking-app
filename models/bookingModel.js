@@ -13,7 +13,7 @@ const Booking = sequelize.define('Booking', {
         allowNull: false,
         validate: {
             notEmpty:true,
-            len: [3, 50]
+            len: [1, 255]
         }
     },
     phone: {

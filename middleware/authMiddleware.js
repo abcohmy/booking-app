@@ -41,14 +41,17 @@ const optionalAuthMiddleware = async (req, res, next) => {
     if (authHeader && authHeader.startsWith('Bearer ')){
         const token = authHeader.split(' ')[1];
         try {
-            const decoded = jwt.verify(token, JWT_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const user = await User.findByPk(decoded.user_id, {
                 attributes: {exclude: ['password']}
             });
+
+
             if (user) req.user = user;
 
         } catch (error){
             //token無效當作沒登入
+            console.warn('JWT 驗證失敗:', error.message);
         }
     }
     next();
@@ -63,7 +66,7 @@ const authorizeRoles = (...roles) => {
         //!req.user=>表沒過前面的authMiddleware認證
         //!roles.includes(req.user.role)=> 表非預設的使用者類別
         if (!req.user || typeof req.user.role !== 'string' || !roles.includes(req.user.role)){
-            return res.status(403).josn({message: '禁止訪問: 您沒有此權限。'});
+            return res.status(403).json({message: '禁止訪問: 您沒有此權限。'});
         }
         //next是express內建請express執行下一個步驟
         next();
