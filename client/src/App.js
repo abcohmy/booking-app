@@ -1,36 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useCallback } from 'react';
+import axiosInstance from './utils/axiosInstance';
+import {formatToLocalDatetimeInput, formatForDisplay, toISOStringOrNull} from './utils/time';
+import Login from './pages/Login';
 import './App.css';
 
 // 設定後端基礎URL
 // Express 假設設在 http://localhost:5000
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/bookings'; //Express API 路徑前綴為 /bookings
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api/bookings'; //Express API 路徑前綴為 /bookings
 
 function App() {
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({name:'',phone:'', booking_time:''});
+  const [formData, setFormData] = useState({
+        name:'',
+        phone:'', 
+        booking_time:'',
+        status:'pending',
+      });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchUsers = async () => { // JS中瀏覽器的發送網路請求
+  const [showLogin, setShowLogin] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const isAdmin = currentUser?.role === 'admin';
+
+  const handleLoginSuccess = (userData) =>{
+    setCurrentUser(userData);
+    setShowLogin(false);
+  };
+
+  const handleLogout = useCallback(async () => {
+    localStorage.removeItem('user');
+    setCurrentUser(null);
+    setEditingUser(null);
+    setError(null);
+  }, [setCurrentUser, setEditingUser, setError]);
+
+
+  //useCallback 使之變成變數賦值
+  const fetchUsers = useCallback(async () => { // JS中瀏覽器的發送網路請求
     setLoading(true); // 同載入中功能
     setError(null); //清除上次錯誤訊息
     try {
       //fetch沒寫預設get fetch接收網路請求會接續router做處理 結果回傳(response)
-      const response = await axios.get(`${API_BASE_URL}`);
+      const response = await axiosInstance.get(`${API_BASE_URL}`);
       setUsers(response.data);
-    } catch (err){
-      console.error("Fetch users failed:", err);
-      setError(`無法載入用戶資料。錯誤: ${err.response?.data?.message || err.message}`);
+    } catch (error){
+      console.error("Fetch users failed:", error);
+      // 401 Unanthorized => token 不存在或已過期
+      // 403 Forbidden => 登入但權限不夠
+      if (error.response?.status === 401 || error.response?.status === 403){
+        handleLogout();
+        setError('請重新登入，或您沒有權限訪問。');
+      }else{
+      setError(`無法載入用戶資料。錯誤: ${error.response?.data?.message || error.message}`);
+      }
     } finally{
       setLoading(false);
     }
-  }
+    // setLoading, setError, setUsers, handleLogout變動 才會重建
+  }, [setLoading, setError, setUsers, handleLogout]);
 
-    useEffect(() => { // render以外的雜事交給useEffect
-      fetchUsers();
-    }, []); //空依賴振烈表示此只在首次渲染執行
 
 
     //表單輸入處理
@@ -45,12 +75,35 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        await axios.post(`${API_BASE_URL}`, formData);
-        setFormData({name:'',phone:'', booking_time:''});
+
+        if (!formData.name.trim()){
+          setError('請輸入姓名。');
+          return;
+        }
+
+        const phoneRegex = /^09\d{8}$/;
+        if (!phoneRegex.test(formData.phone)){
+          setError('請輸入有效的手機號碼(09開頭共10碼)。');
+          return;
+        }
+
+        if (!formData.booking_time){
+          setError('請選擇預約時間');
+          return;
+        }
+
+        const dataToSend = {
+          name: formData.name, 
+          phone: formData.phone,
+          booking_time: formData.booking_time,
+        }
+
+        await axiosInstance.post(`${API_BASE_URL}`, dataToSend);
+        setFormData({name:'',phone:'', booking_time:'', status:'pending'});
         fetchUsers();
-      } catch (err){
-        console.error("Add user failed:", err);
-        setError(`新增用戶失敗。錯誤: ${err.response?.data?.message || err.message}`);
+      } catch (error){
+        console.error("Add user failed:", error);
+        setError(`新增用戶失敗。錯誤: ${error.response?.data?.message || error.message}`);
       } finally{
         setLoading(false);
       }
@@ -61,30 +114,15 @@ function App() {
       setEditingUser(user);
 
       //時間不改預設是ISO 8601 UTC 會與input的datetime-local不符(不同時區) 再改的時候就不會顯示出來 所以得改
-      let formattedBookingTime = '';
-      if (user.booking_time && typeof user.booking_time === 'string'){
-        const dateObj = new Date(user.booking_time);
+      const formattedBookingTime = formatToLocalDatetimeInput(user.booking_time);
 
-        if (!isNaN(dateObj.getTime())) { //getTime()無效傳回NaN
-          const year = dateObj.getFullYear();
-          const month = String(dateObj.getMonth() + 1).padStart(2, '0'); //JS的奇怪設定 月從0開始
-          const day = String(dateObj.getDate()).padStart(2, '0'); 
-          const hours = String(dateObj.getHours()).padStart(2, '0'); 
-          const minutes = String(dateObj.getMinutes()).padStart(2, '0'); 
-          formattedBookingTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-        } else{
-          console.warn ('Invalid Date string received:', user.booking_time);
-        }
-      }
-
-
-      setFormData({name: user.name, phone: user.phone, booking_time: formattedBookingTime});
+      setFormData({name: user.name, phone: user.phone, status: user.status || 'pending',booking_time: formattedBookingTime});
     };
 
     // 取消編輯
     const handleCancelEdit = () => {
       setEditingUser(null);
-      setFormData({name:'', phone:'', booking_time:''});
+      setFormData({name:'', phone:'', booking_time:'', status:'pending'});
     };
 
     //3.1 提交編輯
@@ -97,14 +135,40 @@ function App() {
         setLoading(false);
         return;
       }
+
+      if (!formData.name.trim()){
+        setError('請輸入姓名。');
+        return;
+      }
+
+      const phoneRegex = /^09\d{8}$/;
+      if (!phoneRegex.test(formData.phone)){
+        setError('請輸入有效的手機號碼(09開頭共10碼)。');
+        return;
+      }
+
+      if (!formData.booking_time){
+        setError('請選擇預約時間');
+        return;
+      }
+
+      const dataToUpdate = {
+        name: formData.name, 
+        phone: formData.phone,
+        booking_time: formData.booking_time,
+        status: formData.status
+      }
+
+
+
       try{
-        await axios.put(`${API_BASE_URL}/${editingUser.id}`, formData);
-        setFormData({name:'',phone:'', booking_time:''});
+        await axiosInstance.put(`${API_BASE_URL}/${editingUser.id}`, dataToUpdate);
+        setFormData({name:'',phone:'', booking_time:'', status:'pending'});
         setEditingUser(null); 
         fetchUsers();
-      } catch (err){
-        console.error("Update user failed:", err);
-        setError("更新用戶失敗，請檢察輸入或後端服務。");
+      } catch (error){
+        console.error("Update user failed:", error);
+        setError(`更新用戶失敗，錯誤: ${error.response?.data?.message|| error.message}`);
       } finally{
         setLoading(false);
       }
@@ -119,22 +183,50 @@ function App() {
         return;
       }
       try {
-        await axios.delete(`${API_BASE_URL}/${userId}`);
+        await axiosInstance.delete(`${API_BASE_URL}/${userId}`);
         fetchUsers();
-      } catch (err){
-        console.error("Delete user failed:", err);
-        setError("刪除用戶失敗，請檢查後端服務。");
+      } catch (error){
+        console.error("Delete user failed:", error);
+        setError(`刪除用戶失敗，錯誤: ${error.response?.data?.message || error.message}`);
       } finally {
         setLoading(false);
       }
     };
 
+  useEffect(() => { // render以外的雜事交給useEffect
+
+    const storedUser = localStorage.getItem('user');
+    if (storedUser){
+      setCurrentUser(JSON.parse(storedUser));
+    }
+    fetchUsers();
+  }, [fetchUsers]); //空依賴振烈表示此只在首次渲染執行
+
+  useEffect(() => {
+    if (currentUser?.role ==='admin'){
+      fetchUsers();
+    }
+  }, [currentUser, fetchUsers]);
+
   return (
     <div className='App'>
       <header className='App-header'>
         <h1>用戶管理介面</h1>
+        <div style={{display: 'flex', alignItems: 'center'}}>
+          {currentUser? ( 
+            <>
+              <p style={{margin: '0 15px 0 0'}}>
+                哈囉，{currentUser.username} ({currentUser.role === 'admin' ? '管理者': '一般用戶'})
+              </p>
+              <button onClick={handleLogout} style={{padding: '8px 15px'}}>登出</button>
+            </> ): (
+              <button onClick={() => setShowLogin(true)} style={{padding: '8px 15px'}}>登出</button>
+            )}
+
+        </div>
       </header>
       <main>
+        {showLogin && (<Login onLoginSuccess={handleLoginSuccess}/>)}
         {error && <p style={{ color: 'red'}}>錯誤:{error}</p>}
         {loading && <p>載入中...</p>}
 
@@ -173,6 +265,20 @@ function App() {
                 onChange={handleInputChange}
                 required
                 />
+                {isAdmin && (
+                  <>
+                    <label htmlFor='status'>狀態:</label>
+                    <input 
+                      type='text'
+                      id='status'
+                      name='status'
+                      placeholder='pending?completed?canceled?'
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </>
+                )}
             </div>
             {/* editingUser == true時才會顯示, type=button 是要button綁死onClick 不然預設會是submit */}
             <button type='submit'>{editingUser? '更新用戶':'新增用戶'}</button>
@@ -191,46 +297,23 @@ function App() {
                     <th>姓名</th>
                     <th>電話</th>
                     <th>預約時間</th>
+                    {isAdmin && <th>狀態</th>}
                   </tr>
                 </thead>
                 <tbody>
-              {users.map((user) =>  {
-                  //booking_time格式化
-                  let displayBookingTime = '未設定';
-                  if (user.booking_time){
-                    try {
-                      const bookingDate = new Date(user.booking_time);
-                      if (!isNaN(bookingDate.getTime())){
-                        //格式化成地區完整日期時間
-                        displayBookingTime = bookingDate.toLocaleDateString('zh-tw', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        });
-                      } else{
-                        displayBookingTime = '日期無效';
-                      }
-                    } catch (e){
-                      console.error("日期解析失敗:", user.booking_time,e);
-                      displayBookingTime = '日期解析錯誤';
-                    }
-                  }
-                
-                return (
+              {users.map((user) =>                 
+                 (
                   <tr key={user.id}>
                     <td>{user.name}</td>
                     <td>{user.phone}</td>
-                    <td>{displayBookingTime}</td>
+                    <td>{formatForDisplay(user.booking_time)}</td>
                     <td>
-                      <button onClick={() => handleEditClick(user)}>編輯</button>
-                      <button onClick={() => handleDeleteUser(user.id)} style={{marginLeft: '5px'}}>刪除</button>
+                      {isAdmin && <button onClick={() => handleEditClick(user)}>編輯</button>}
+                      {isAdmin && <button onClick={() => handleDeleteUser(user.id)} style={{marginLeft: '5px'}}>刪除</button>}
                     </td>
                   </tr>
-              );
-              })}
+              )
+              )}
             </tbody>
           </table>
           )}
