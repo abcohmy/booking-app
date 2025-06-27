@@ -1,11 +1,11 @@
 
-import {useState} from 'react'; // React 在react-17前需要引入
-
+import React, {useState} from 'react'; // React 在react-17前需要引入
+import { useNavigate } from 'react-router-dom';
 //default export 匯出的變數名字，import 時可以自己取。
 import axiosInstance from '../utils/axiosInstance';
 
 //props 回傳只有一個，寫這樣比props.onLoginSuccess易讀
-function Login({ onLoginSuccess }) {
+function Login() {
     const [formData, setFormData] = useState({
         username: '',
         password: ''
@@ -14,6 +14,8 @@ function Login({ onLoginSuccess }) {
 
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate();   
 
     const handleInputChange = (e) => {
         const { name, value} = e.target;
@@ -48,11 +50,13 @@ function Login({ onLoginSuccess }) {
                 username: formData.username, 
                 password: formData.password});
             // 密碼不能存進localStorage
-            const {username, role, token } = res.data;
-            localStorage.setItem('user', JSON.stringify({username, role}));
+            const {user, token } = res.data;
+            localStorage.setItem('user', JSON.stringify(user));
             localStorage.setItem('token', token);
 
-            onLoginSuccess(res.data);
+            console.log("Login 成功 response:", res.data.user);
+            navigate('/');
+            
         } catch (error){
             console.error("Login failed:", error);
             //error為axios回覆的物件 => error.response是伺服器回應的錯誤
