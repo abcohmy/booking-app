@@ -19,6 +19,12 @@ const generateToken = (user_id, role) => {
     });
 };
 
+router.get('/check-username', async (req, res) => {
+    const { username } = req.query;
+    const existingUser = await User.findOne({where:{username}});
+    res.json({available: !existingUser});
+});
+
 // 註冊
 router.post('/register', async (req, res) => {
     const {error, value} = registerSchema.validate(req.body);
@@ -75,6 +81,7 @@ router.post('/login', async (req, res) => {
                 message: '登入成功。',
                 user: {
                 user_id:user.user_id,
+                username:user.username,
                 role: user.role
                 },
                 token: generateToken(user.user_id, user.role)
@@ -90,6 +97,6 @@ router.post('/login', async (req, res) => {
 
 });
 
+
 module.exports = router;
 
-// 寫完authRoutes 回去把認證軟體寫好 authMiddleware...後面再改bookingRoutes (記得把schema補上)

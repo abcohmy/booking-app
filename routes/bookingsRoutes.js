@@ -6,23 +6,40 @@ const Booking = require('../models/bookingModel');
 const {bookingSchema} = require('../schema/bookingSchema');
 
 router.get('/', optionalAuthMiddleware, async (req, res) => {
-    let attributes;
+
+  //分頁 => offset是前面排除的資料 offset = (page - 1) * limit
+  const limit = parseInt(req.query.limit) || 15;
+  const page = parseInt(req.query.page) || 1;
+  const offset = (page - 1) * limit;
+
+
+  let attributes;
 
     //req在middleware被加入req.user, user為sequelize物件(user model)
     //req在整個request能被隨意加入屬性
     if (!req.user){
         //未登入
-        attributes = ['name', 'booking_time'];
+        attributes = [ 'booking_id', 'name', 'booking_time'];
     } else if (req.user.role === 'admin'){
         attributes = undefined; // Sequelize預設抓全部欄位
     } else {
         //role = user
-        attributes = ['name', 'booking_time' ];
+        attributes = [ 'booking_id', 'name', 'booking_time' ];
     }
 
     try {
-        const bookings = await Booking.findAll({attributes});
-        res.json(bookings);
+        const {count, rows} = await Booking.findAll({
+          attributes,
+          limit,
+          offset,
+          order:[['booking_time', 'DESC']]
+        });
+        res.json({
+          data: rows,
+          total:count,
+          page, 
+          totalPages: Math.ceil(count/limit),
+        });
     } catch (error) {
         console.error('獲取預定資訊時發生錯誤:', error);
         res.status(500).json({message: '內部伺服器錯誤，無法獲取預定資訊。'});
