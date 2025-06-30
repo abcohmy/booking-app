@@ -1,4 +1,9 @@
 
+/*
+  (1) useUserForm - 表單邏輯
+  (2) useUserList - 用戶清單 / 分頁 / 搜尋
+  (3) useSession  - 管理登入登出邏輯
+*/
 // src/hooks/useUserController.js
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +12,9 @@ import * as userApi from '../api/userApi';
 
 export default function useUserController() {
   const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState(userService.emptyFormData());
   const [error, setError] = useState(null);
@@ -15,6 +23,7 @@ export default function useUserController() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const isAdmin = currentUser?.role === 'admin';
+  const pageLimit = 15;
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('user');
@@ -29,19 +38,20 @@ export default function useUserController() {
     setLoading(true);
     setError(null);
     try {
-      const data = await userApi.fetchUsers();
-      setUsers(data);
+      const data = await userApi.fetchUsers(search, page ,pageLimit);
+      setUsers(data.data);
+      setTotalPages(data.totalPages);
     } catch (err) {
       if ([401, 403].includes(err?.response?.status)) {
         handleLogout();
         setError('請重新登入，或您沒有權限訪問。');
       } else {
-        setError(`無法載入用戶資料: ${err.message}`);
+        setError(`無法載入用戶資料: ${getErrorMessage(err)}`);
       }
     } finally {
       setLoading(false);
     }
-  }, [handleLogout]);
+  }, [handleLogout, search, page]);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -66,9 +76,10 @@ export default function useUserController() {
       const payload = userService.formatToServer(formData);
       await userApi.createUser(payload);
       setFormData(userService.emptyFormData());
+      setPage(1);
       fetchUsers();
     } catch (err) {
-      setError(`新增用戶失敗: ${err.message}`);
+      setError(`新增用戶失敗: ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -86,7 +97,7 @@ export default function useUserController() {
 
   const handleUpdateUser = async (e) => {
     e.preventDefault();
-    if (!editingUser?.id) return setError("沒有用戶ID");
+    if (!editingUser?.booking_id) return setError("沒有用戶ID");
 
     const err = userService.validateUserData(formData);
     if (err) return setError(err);
@@ -94,12 +105,13 @@ export default function useUserController() {
     try {
       setLoading(true);
       const payload = userService.formatToServer(formData);
-      await userApi.updateUser(editingUser.id, payload);
+      await userApi.updateUser(editingUser.booking_id, payload);
       setFormData(userService.emptyFormData());
       setEditingUser(null);
+      setPage(1);
       fetchUsers();
     } catch (err) {
-      setError(`更新失敗: ${err.message}`);
+      setError(`更新失敗: ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -112,18 +124,26 @@ export default function useUserController() {
       await userApi.deleteUser(id);
       fetchUsers();
     } catch (err) {
-      setError(`刪除失敗: ${err.message}`);
+      setError(`刪除失敗: ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
   };
 
+  const getErrorMessage = (err, fallback = '發生未知錯誤') => {
+    return err?.response?.data?.message || err?.message || fallback;
+  }
+
   return {
     users,
     formData,
     editingUser,
+    page, 
+    setPage,
+    totalPages,
+    search,
+    setSearch,
     currentUser,
-    setCurrentUser,
     isAdmin,
     error,
     loading,
