@@ -2,8 +2,14 @@
 // src/api/userApi.js
 import axiosInstance from '../utils/axiosInstance';
 
-export const fetchUsers = async () => {
-  const res = await axiosInstance.get('/bookings');
+export const fetchUsers = async (search, page, limit) => {
+  const res = await axiosInstance.get('/bookings', {
+    params:{
+      search,
+      page,
+      limit
+    },
+  });
   return res.data;
 };
 

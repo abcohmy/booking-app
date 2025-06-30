@@ -1,5 +1,5 @@
 // src/services/userService.js
-import { formatToLocalDatetimeInput, toISOStringOrNull } from '../utils/time';
+import { formatToLocalDatetimeInput, toISOStringOrNull, roundToHalfHour } from '../utils/time';
 
 export function validateUserData({ name, phone, booking_time }) {
   if (!name.trim()) return '請輸入姓名';
@@ -9,10 +9,12 @@ export function validateUserData({ name, phone, booking_time }) {
 }
 
 export function formatToServer(formData) {
+  const normalizedTime = roundToHalfHour(formData.booking_time);
+
   return {
     name: formData.name,
     phone: formData.phone,
-    booking_time: toISOStringOrNull(formData.booking_time),
+    booking_time: toISOStringOrNull(normalizedTime),
     status: formData.status,
   };
 }

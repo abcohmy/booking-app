@@ -3,12 +3,13 @@
 import React from 'react';
 import { formatForDisplay } from '../utils/time';
 
-export default function UserTable({ users, isAdmin, onEdit, onDelete }) {
+export default function UserTable({ users, isAdmin, onEdit, onDelete, page, setPage, totalPages}) {
   if (!users.length) return <p>目前沒有用戶。</p>;
 
   return (
     <section className='user-list'>
       <h2>所有用戶</h2>
+      
       <table>
         <thead>
           <tr>
@@ -46,6 +47,11 @@ export default function UserTable({ users, isAdmin, onEdit, onDelete }) {
         )}
         </tbody>
       </table>
+      <div>
+        <button disabled={page===1} onClick={() => setPage(p => p-1)}>前一頁</button>
+        <span> page {page} / {totalPages} </span>
+        <button disabled={page===totalPages} onClick={() => setPage(p=>p+1)}>下一頁</button>
+      </div>
     </section>
   );
 }

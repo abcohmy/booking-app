@@ -11,6 +11,11 @@ export default function UserPage() {
     users,
     formData,
     editingUser,
+    page, 
+    setPage,
+    totalPages,
+    search,
+    setSearch,
     currentUser,
     isAdmin,
     error,
@@ -40,14 +45,34 @@ export default function UserPage() {
         onChange={handleInputChange}
         onSubmit={editingUser ? handleUpdateUser : handleAddUser}
         onCancel={handleCancelEdit}
+        
       />
+      <div>
+        <label htmlFor='search'>搜尋</label>
+        <input 
+          type='text'
+          id='search'
+          name='search'
+          placeholder='搜尋姓名或日期(如Bob，2025-06-30)'
+          value={search}
+          onChange={(e) =>{
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+        />
+      </div>
 
       <UserTable
         users={users}
         isAdmin={isAdmin}
         onEdit={handleEditClick}
         onDelete={handleDeleteUser}
+        page={page}
+        setPage={setPage}
+        totalPages={totalPages}
       />
+
+
     </div>
   );
 }

@@ -44,6 +44,21 @@ function toISOStringOrNull(localDatetimeStr){
     return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+function roundToHalfHour(datetimeStr) {
+  const d = new Date(datetimeStr);
+  d.setSeconds(0);
+  d.setMilliseconds(0);
+  const minutes = d.getMinutes();
+  if (minutes < 30) {
+    d.setMinutes(0);
+  } else {
+    d.setMinutes(30);
+  }
+
+  return d;
+
+}
+
 
 //default只推薦用一個函數, 包起來反而太長
-export {formatToLocalDatetimeInput, formatForDisplay, toISOStringOrNull};
+export {formatToLocalDatetimeInput, formatForDisplay, toISOStringOrNull, roundToHalfHour};

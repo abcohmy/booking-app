@@ -4,6 +4,10 @@ const router = express.Router();
 const {authMiddleware, optionalAuthMiddleware, authorizeRoles} = require('../middleware/authMiddleware');
 const Booking = require('../models/bookingModel');
 const {bookingSchema} = require('../schema/bookingSchema');
+//Op是sequelize邏輯運算專用
+const { Op } = require('sequelize');
+const Sequelize  = require('sequelize');
+
 
 router.get('/', optionalAuthMiddleware, async (req, res) => {
 
@@ -12,6 +16,26 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * limit;
 
+  //搜尋用 與原先查資料邏輯沒差多少 沒必要分開
+  const search = req.query.search || '';
+  const where = search ? {
+        /*
+        Sequelize的Op.or的專屬寫法 [Op.or][1, 2, ...] => WHERE 1 OR 2 OR ...
+        沒包在or內的項目會被當作and
+        放進Op.or/Op.and等Sequelize運算裡要各自為一個物件/條件表達式
+        */
+        [Op.or]:[
+          //外{}:JS object 內{}:Op.like的寫法
+          {name: {[Op.like]: `%${search}%`}},
+          /*
+          Sequelize.fn=>轉成只有日期沒時間的格式
+          Sequelize.col('booking_time')=> 對應booking_time欄位
+          Sequelize.where(fnResult, value) =>WHERE fnResult = value
+          */
+          Sequelize.where(Sequelize.fn('DATE', Sequelize.col('booking_time')), search)
+          
+        ]
+  } : {};
 
   let attributes;
 
@@ -28,11 +52,13 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
     }
 
     try {
-        const {count, rows} = await Booking.findAll({
+      //findAndCountAll分頁用取當前顯示的量
+        const {count, rows} = await Booking.findAndCountAll({
           attributes,
+          where,
           limit,
           offset,
-          order:[['booking_time', 'DESC']]
+          order:[['updatedAt', 'DESC']]
         });
         res.json({
           data: rows,
@@ -59,6 +85,12 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
     const { name, phone, booking_time } = value;
 
     try {
+        const existing_time = await Booking.findOne({where:{booking_time}});
+        if (existing_time){
+          return res.status(400).json({message: '此時段已被預約，請選擇其他時間。'});
+        }
+
+
         const newBooking = await Booking.create ({ // Sequelize: create
             //object shorthand（物件簡寫語法），value的變數名和 key 相同 就能簡寫
             name,
@@ -101,6 +133,16 @@ router.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, res) => {
             return res.status(404).json({message: '預約未找到'});
         }
 
+
+        const existing_time = await Booking.findOne({
+          where: {
+            booking_time,
+            booking_id: {[Op.ne]: booking_id}
+          }
+        });
+        if (existing_time){
+          return res.status(400).json({message: '此時段已被預約，請選擇其他時間。'});
+        }
         //sequelize update回傳一組資料 其中第一個是更新數(在此自己設定成affectedCount)
         // JavaScript 陣列解構賦值可只取第一個，剩下拋棄
         //要確認更新得用.change 才能確認有沒有被更動
