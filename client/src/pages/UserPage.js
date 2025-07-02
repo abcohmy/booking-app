@@ -5,12 +5,15 @@ import useUserController from '../hooks/useUserController';
 import Dashboard from '../components/Dashboard';
 import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
+import SearchBar from '../components/SearchBar';
 
 export default function UserPage() {
   const {
     users,
     formData,
-    editingUser,
+    isEditing,
+    isFormOpen,
+    setIsFormOpen,
     page, 
     setPage,
     totalPages,
@@ -21,58 +24,60 @@ export default function UserPage() {
     error,
     loading,
     handleInputChange,
-    handleAddUser,
+    handleSubmit,
     handleEditClick,
     handleCancelEdit,
-    handleUpdateUser,
     handleDeleteUser,
     handleLogout,
   } = useUserController();
 
   return (
     <div className='UserPage'>
-      <h1>用戶管理介面</h1>
-
       <Dashboard currentUser={currentUser} onLogout={handleLogout} />
 
-      {error && <p style={{ color: 'red' }}>錯誤: {error}</p>}
-      {loading && <p>載入中...</p>}
-
-      <UserForm
-        formData={formData}
-        isEditing={!!editingUser}
-        isAdmin={isAdmin}
-        onChange={handleInputChange}
-        onSubmit={editingUser ? handleUpdateUser : handleAddUser}
-        onCancel={handleCancelEdit}
+      {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4'>錯誤: {error}</div>}
+      {loading && <div className='bg-blue-100 text-blue-800 px-4 py-2 rounded mb-4'>載入中...</div>}
+      <div className='p-6'>
+        <div className='flex items-center justify-between mb-6 h-15'>
+            <div className='flex-1 mr4'>
+            <SearchBar search={search} setSearch={setSearch} setPage={setPage}/>
+          </div>
+          <div className='w-[15%] h-15 p-4'>
+            <button 
+              onClick={() => setIsFormOpen(true)}
+              //transition=>原本藍色 懸停時會150ms平滑過渡到紅色
+              className='w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition'
+            >
+              + 新增用戶
+            </button>
+           
+          </div>
         
-      />
-      <div>
-        <label htmlFor='search'>搜尋</label>
-        <input 
-          type='text'
-          id='search'
-          name='search'
-          placeholder='搜尋姓名或日期(如Bob，2025-06-30)'
-          value={search}
-          onChange={(e) =>{
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
-      </div>
+                  
+        </div>
 
-      <UserTable
-        users={users}
-        isAdmin={isAdmin}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteUser}
-        page={page}
-        setPage={setPage}
-        totalPages={totalPages}
-      />
+          <UserTable
+            users={users}
+            isAdmin={isAdmin}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteUser}
+            page={page}
+            setPage={setPage}
+            totalPages={totalPages}
+          />
 
-
+      </div> 
+        {isFormOpen && (
+          <UserForm
+            formData={formData}
+            isEditing={!!isEditing}
+            isAdmin={isAdmin}
+            onChange={handleInputChange}
+            onSubmit={handleSubmit}
+            onCancel={handleCancelEdit}
+          />  
+        )}
+            
     </div>
   );
 }
