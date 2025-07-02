@@ -1,12 +1,11 @@
 // 載入.env 隱藏的變數資料
 require('dotenv').config();
-
+require('dotenv-flow').config();
 
 const express = require('express');
 const cors = require('cors');
 
-const User = require('./models/userModel');
-const Booking = require('./models/bookingModel');
+
 const authRoutes = require('./routes/authRoutes');
 const bookingsRoutes = require('./routes/bookingsRoutes');
 

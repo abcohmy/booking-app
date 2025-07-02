@@ -1,28 +1,29 @@
-const {DataTypes} = require('sequelize');
-const {sequelize} = require('../db/index');
-const User = require('./userModel');
+const { Model, DataTypes } = require('sequelize');
 
-const Booking = sequelize.define('Booking', {
-    booking_id: {
+class Booking extends Model {
+  static initModel(sequelize) {
+    //super = model super.init = model.init
+    return super.init({
+      booking_id: {
         type: DataTypes.INTEGER,
         primaryKey:true,
         autoIncrement:true
-    },
-    name : {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-            notEmpty:true,
-            len: [1, 255]
-        }
-    },
-    phone: {
+      },
+      name : {
+          type: DataTypes.STRING,
+          allowNull: false,
+          validate: {
+              notEmpty:true,
+              len: [1, 255]
+          }
+      },
+      phone: {
         type: DataTypes.STRING,
         allowNull: false,
         validate:{
             is: /09[0-9]{8}/ // 手機格式認證
         }
-    },
+      },
 
     booking_time: {
         type: DataTypes.DATE,
@@ -33,25 +34,37 @@ const Booking = sequelize.define('Booking', {
     },
 
     status: {
-        type: DataTypes.ENUM('pending', 'completed', 'cancelled'),
+        type: DataTypes.STRING,
         defaultValue: 'pending',
-        allowNull:false
+        allowNull:false,
+        validate: {
+          isIn: [['pending', 'completed', 'cancelled']]
+        }
     },
 
     //繼承userModel的 user_id
     profile_id: {
         type: DataTypes.INTEGER,
-        references:{
-            model: User,
-            key: 'user_id'
-        },
+        
         allowNull : true
     }
-}, {
-        timestamps: true
-});
+  }, {
+    sequelize,
+    modelName: 'Booking',
+    tableName: 'bookings',
+    timestamps: true
+  });
+    
+  }
+  static associations(models) {
+    this.belongsTo(models.User, {
+      foreignKey: 'profile_id',
+      as: 'user'
+    });
+  }
+}
+    
+    
 
-//有foreignKey(此是profile_id = user_id)用
-Booking.belongsTo(User, {foreignKey: 'profile_id'});
 
 module.exports = Booking;

@@ -1,6 +1,12 @@
 
 const mysql = require('mysql2/promise'); // promise for async/await 
-const {Sequelize} = require('sequelize');
+
+
+const Sequelize = require('sequelize');
+const Booking = require('../models/bookingModel');
+const User = require('../models/userModel');
+
+
 
 const sequelize = new Sequelize(
     process.env.DB_NAME,
@@ -31,6 +37,13 @@ const sequelize = new Sequelize(
         timezone: '+08:00' // 台灣時區, 只在讀取時有用 存還是用不帶時區的UTC怕出錯
     }
 );
+
+User.initModel(sequelize);
+Booking.initModel(sequelize);
+//有foreignKey(此是profile_id = user_id)用
+
+User.associate?.({Booking});
+Booking.associate?.({User});
 
 async function initializeDb() {
     try {

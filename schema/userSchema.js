@@ -12,11 +12,11 @@ const registerSchema = Joi.object({
         'any.required': '使用者名稱是必填欄位'
     }),
 
-    password: Joi.string().min(8).max(20).required().messages({
+    password: Joi.string().min(8).max(255).required().messages({
         'string.base': '密碼必須是文字格式',
         'string.empty': '密碼不能為空',
         'string.min': '密碼最少要8個字元',
-        'string.max': '密碼最多不能超過20個字元',
+        'string.max': '密碼最多不能超過255個字元',
         'any.required': '密碼是必填欄位'
     }),
 
