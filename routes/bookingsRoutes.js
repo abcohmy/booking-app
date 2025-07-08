@@ -1,6 +1,6 @@
 //預定在 http://localhost:port/api/bookings
 const express = require('express');
-const router = express.Router(); 
+const bookingRouter = express.Router(); 
 const {authMiddleware, optionalAuthMiddleware, authorizeRoles} = require('../middleware/authMiddleware');
 const Booking = require('../models/bookingModel');
 const {bookingSchema} = require('../schema/bookingSchema');
@@ -9,7 +9,7 @@ const { Op } = require('sequelize');
 const Sequelize  = require('sequelize');
 
 
-router.get('/', optionalAuthMiddleware, async (req, res) => {
+bookingRouter.get('/', optionalAuthMiddleware, async (req, res) => {
 
   //分頁 => offset是前面排除的資料 offset = (page - 1) * limit
   const limit = parseInt(req.query.limit) || 15;
@@ -17,25 +17,33 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
   const offset = (page - 1) * limit;
 
   //搜尋用 與原先查資料邏輯沒差多少 沒必要分開
-  const search = req.query.search || '';
-  const where = search ? {
-        /*
+  const nameSearch = req.query.name;
+  const dateSearch = req.query.date;
+
+  const where = {};
+  if (nameSearch){
+    
+    //外{}:JS object 內{}:Op.like的寫法
+    where.name = {[Op.like]: `%${nameSearch}%`};
+  }
+
+  if (dateSearch) {
+    /*
         Sequelize的Op.or的專屬寫法 [Op.or][1, 2, ...] => WHERE 1 OR 2 OR ...
         沒包在or內的項目會被當作and
         放進Op.or/Op.and等Sequelize運算裡要各自為一個物件/條件表達式
-        */
-        [Op.or]:[
-          //外{}:JS object 內{}:Op.like的寫法
-          {name: {[Op.like]: `%${search}%`}},
-          /*
+    */
+   /*
           Sequelize.fn=>轉成只有日期沒時間的格式
           Sequelize.col('booking_time')=> 對應booking_time欄位
           Sequelize.where(fnResult, value) =>WHERE fnResult = value
           */
-          Sequelize.where(Sequelize.fn('DATE', Sequelize.col('booking_time')), search)
-          
-        ]
-  } : {};
+    where[Op.and] = Sequelize.where(Sequelize.fn('DATE',
+       Sequelize.col('booking_time')), 
+       dateSearch
+      );
+
+  }
 
   let attributes;
 
@@ -60,7 +68,7 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
           offset,
           order:[['updatedAt', 'DESC']]
         });
-        res.json({
+        res.status(200).json({
           data: rows,
           total:count,
           page, 
@@ -68,11 +76,11 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
         });
     } catch (error) {
         console.error('獲取預定資訊時發生錯誤:', error);
-        res.status(500).json({message: '內部伺服器錯誤，無法獲取預定資訊。'});
+        res.status(500).json({message: error.message || '內部伺服器錯誤，無法獲取預定資訊。'});
     }
 });
 
-router.post('/', optionalAuthMiddleware, async (req, res) => {
+bookingRouter.post('/', optionalAuthMiddleware, async (req, res) => {
     const { error, value}= bookingSchema.validate(req.body);
 
     if (error){
@@ -110,14 +118,14 @@ router.post('/', optionalAuthMiddleware, async (req, res) => {
         }
 
         //非使用者輸入問題的其他錯誤
-        return res.status(400).json({message: error.message||'未知錯誤' });
+        return res.status(500).json({message: error.message||'未知錯誤' });
         
     }
 });
 
 
 // 拿來改SQL PUT PATCH用起來差不多
-router.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, res) => {
+bookingRouter.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, res) => {
     const {error, value} = bookingSchema.validate(req.body);
 
     if (error){
@@ -160,20 +168,20 @@ router.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, res) => {
         
         //不重取的話使用者看到的還是舊資料(更改的結果存在DB)，所以重取讓使用者看到更改的資料
         const updatedBooking = await Booking.findByPk(booking_id);
-        res.json(updatedBooking);
+        res.status(200).json(updatedBooking);
     } catch (error) {
         console.error('更新預約資料失敗:', error);
         if (error.name === 'SequelizeValidationError'){
             const errors = error.errors.map(e => e.message);
             return res.status(400).json({message: '驗證錯誤', errors});
         }
-        return res.status(400).json({message: error.message || '未知錯誤'});
+        return res.status(500).json({message: error.message || '未知錯誤'});
     }
     
 });
 
 
-router.delete('/:id', authMiddleware, authorizeRoles('admin'), async (req, res) => {
+bookingRouter.delete('/:id', authMiddleware, authorizeRoles('admin'), async (req, res) => {
     const booking_id = req.params.id;
 
     try {
@@ -185,7 +193,7 @@ router.delete('/:id', authMiddleware, authorizeRoles('admin'), async (req, res) 
             return res.status(404).json({message: '預約未找到或已被刪除' });
         }
 
-        res.json({message: '預約已刪除'});
+        res.status(200).json({message: '預約已刪除'});
     } catch (error){
         console.error( '刪除客戶資料時發生錯誤:', error);
         res.status(500).json({message: error.message});
@@ -193,5 +201,5 @@ router.delete('/:id', authMiddleware, authorizeRoles('admin'), async (req, res) 
         
 });
 
-module.exports = router;
+module.exports = {bookingRouter};
 

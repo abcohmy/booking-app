@@ -1,32 +1,28 @@
 const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
+const authRouter = express.Router();
 const User = require('../models/userModel');
 
 //schema:拒絕不合理的用戶輸入/減少DB負擔
 const {loginSchema, registerSchema} = require('../schema/userSchema');
 
-/* JSON Web Token : 無狀態 (stateless) 的身份驗證/有狀態的話會需要多存很多用戶資訊
-    {user_id, role} => 看該token包含哪些資訊 此範例設定在User裡
-    process.env.JWT_SECRET => 在伺服器設定(.env2等)的金鑰, 會被jwt.sign()生成JWT字串, 
-        加這串是保護驗證安全, 不然別人有相同的其他資訊就能偽造任意身分
-    { expiresIn: '1h' } => 一小時候token 過期
-*/
+const {generateToken} = require('../utils/token');
 
-const generateToken = (user_id, role) => {
-    return jwt.sign({user_id, role}, process.env.JWT_SECRET, {
-        expiresIn: '1h'
-    });
-};
 
-router.get('/check-username', async (req, res) => {
+
+
+authRouter.get('/check-username', async (req, res) => {
+  try{
     const { username } = req.query;
     const existingUser = await User.findOne({where:{username}});
     res.json({available: !existingUser});
+  } catch (error){
+    console.error('查詢失敗:', error);
+    res.status(500).json({message: '伺服器錯誤:' + error.message});
+  }
 });
 
 // 註冊
-router.post('/register', async (req, res) => {
+authRouter.post('/register', async (req, res) => {
     const {error, value} = registerSchema.validate(req.body);
     
     if (error){
@@ -48,7 +44,10 @@ router.post('/register', async (req, res) => {
         //不回傳結果，用戶端會卡住loading
         return res.status(201).json({
             message: '使用者註冊成功。',
-            user: { user_id: user.user_id, username: user.username, role: user.role}
+            user: { 
+              user_id: user.user_id, 
+              username: user.username, 
+              role: 'user'}
         });
 
     } catch (error){
@@ -60,7 +59,7 @@ router.post('/register', async (req, res) => {
 
 //POST: 提交資料=>建立新資源/進行處理或操作
 //改變伺服器狀態的應用post， GET用在沒有其他處理或操作的地方
-router.post('/login', async (req, res) => {
+authRouter.post('/login', async (req, res) => {
     const {error, value} = loginSchema.validate(req.body);
     
     if (error){
@@ -90,7 +89,7 @@ router.post('/login', async (req, res) => {
             res.status(401).json({message: '無效的密碼'});
         }
     } catch (error) {
-        console. error('登入失敗:', error);
+        console.error('登入失敗:', error);
         res.status(500).json({message: '伺服器錯誤:' + error.message});
     }
 
@@ -98,5 +97,5 @@ router.post('/login', async (req, res) => {
 });
 
 
-module.exports = router;
+module.exports = {authRouter};
 

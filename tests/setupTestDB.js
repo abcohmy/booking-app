@@ -23,8 +23,23 @@ const setupTestDb = async () => {
   await Booking.create({
     name: 'testuser',
     phone: '0987654321',
-    booking_time: new Date() ,
+    booking_time: '2025-07-01T12:00:00.000Z' ,
     status: 'pending',
+    profile_id: 1
+  });
+
+  await Booking.create({
+    name: 'testuser2',
+    phone: '0912345678',
+    booking_time: '2025-07-01T11:00:00.000Z' ,
+    status: 'pending'
+  });
+
+  await Booking.create({
+    name: 'testuser3',
+    phone: '0915345678',
+    booking_time: '2025-07-03T15:00:00.000Z' ,
+    status: 'pending'
   });
 };
 

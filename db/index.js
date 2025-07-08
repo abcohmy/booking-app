@@ -6,15 +6,19 @@ const Sequelize = require('sequelize');
 const Booking = require('../models/bookingModel');
 const User = require('../models/userModel');
 
+//測試用
+const isTest = process.env.NODE_ENV === 'test';
 
 
-const sequelize = new Sequelize(
+const sequelize = isTest ?
+    new Sequelize('sqlite::memory:', {logging:false})
+    :new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
     process.env.DB_PASSWORD,
     {
         host: process.env.DB_HOST,
-        dialect: 'mysql',
+        dialect: process.env.DB_DIALECT,
         port: process.env.DB_PORT || 3306,
         logging: msg =>{
             //只輸出SQL與據
@@ -46,13 +50,17 @@ User.associate?.({Booking});
 Booking.associate?.({User});
 
 async function initializeDb() {
+
+
     try {
         //嘗試連線, 會自動斷掉
         await sequelize.authenticate();
         // 生產環境中須考慮: migrations
         // 小專案可用 sync({force:true}) => 每次啟動會刪除並重建所有表
-        
-        await sequelize.sync();
+        if (isTest){
+          await sequelize.sync({force:true});
+        }
+
         console.log('所有Sequelize模型已同步。')
         return true;
     } catch (err) {

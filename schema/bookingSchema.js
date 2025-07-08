@@ -15,8 +15,9 @@ const bookingSchema = Joi.object({
         'any.required': '手機號碼必填欄位'
     }),
 
-    booking_time: Joi.date().required().messages({
+    booking_time: Joi.date().iso().required().messages({
         'date.base': '預約時間必須是有效日期格式',
+        'date.format': '預約時間必須是有效日期格式',
         'any.required' : '預約時間是必填欄位'
     }),
     status: Joi.string().valid('pending', 'completed', 'cancelled').default('pending').messages({

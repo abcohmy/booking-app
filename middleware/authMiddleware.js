@@ -8,7 +8,7 @@ const authMiddleware = async (req, res, next) =>{
         若有Jwt認證request的header裡會有認證資訊, 而JWT開頭一般是Bearer
     */
     if (!authHeader || !authHeader.startsWith('Bearer ')){
-        return res.status(401).json({message: '未授權，缺少格式錯誤的Token;'});
+        return res.status(401).json({message: '未授權，缺少格式錯誤的Token'});
     }
 
     const token = authHeader.split(' ')[1];
@@ -51,7 +51,8 @@ const optionalAuthMiddleware = async (req, res, next) => {
 
         } catch (error){
             //token無效當作沒登入
-            console.warn('JWT 驗證失敗:', error.message);
+            const msg = error?.message || 'Unknown JWT error';
+            console.warn(`[optionalAuthMiddleware] JWT 驗證失敗:' ${error.message}`);
         }
     }
     next();
