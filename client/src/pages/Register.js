@@ -36,10 +36,12 @@ export default function Register() {
               username : formData.username
             }
           });
-
+          setError(null);
           setUsernameAvailable(res.data.available);
         } catch (err){
           console.error ('帳號檢查失敗', err);
+          setError(err.response?.data?.message || '檢查帳號失敗');
+
           setUsernameAvailable(null);
         }
 
@@ -100,7 +102,7 @@ export default function Register() {
           <div className='w-full max-w-sm bg-white p-6 rounded-lg shadow-md'>
             <h2 className='text-2xl font-semibold text-gray-800 mb-4 text-center'>帳號註冊</h2>
             {error && <p className='text-red-500 mb-2 text-sm text-center'>{error}</p>}
-            <form onSubmit={handleSubmit} className='space-y-4'>
+            <form onSubmit={handleSubmit} data-testid="register-form" className='space-y-4'>
                 <div>
                     <RegisterLabelInput
                       id='username'

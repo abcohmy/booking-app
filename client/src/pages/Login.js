@@ -76,9 +76,9 @@ function Login() {
             <div className='w-full max-w-sm bg-white p-6 rounded-lg shadow-md'>
               <h2 className='text-2xl font-semibold text-gray-800 mb-4 text-center'>登入</h2>
               {error && <p className='text-red-500 mb-2 text-sm text-center'>{error}</p>}
-            <form onSubmit={handleSubmit} className='space-y-4'>
+            <form onSubmit={handleSubmit} data-testid="login-form" className='space-y-4'>
                 <div>
-                    <label htmlFor='username' className='block text-sm font-medium text-gray-700 mb-1'>帳號:</label>
+                    <label htmlFor='username' className='block text-sm font-medium text-gray-700 mb-1'>帳號</label>
                     <input
                         type="text"
                         name="username"
@@ -91,7 +91,7 @@ function Login() {
                     />
                 </div>
                 <div>
-                    <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-1'>密碼:</label>
+                    <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-1'>密碼</label>
                     {/* 父用relative讓子元素當標準用absolute去做定位，沒relative直接用absolute會直接以整個畫面為標準 */}
                     <div className='relative'>
                       <input
