@@ -5,14 +5,14 @@ export function useUserList({pageLimit = 15, onUnauthorized, setError, setLoadin
   const [users, setUsers] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-
+  const [nameSearch, setNameSearch] = useState('');
+  const [dateSearch, setDateSearch] = useState('');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await userApi.fetchUsers(search, page, pageLimit);
+      const data = await userApi.fetchUsers(nameSearch, dateSearch,page, pageLimit);
       setUsers(data.data);
       setTotalPages(data.totalPages);
     } catch (err) {
@@ -25,7 +25,7 @@ export function useUserList({pageLimit = 15, onUnauthorized, setError, setLoadin
     } finally {
       setLoading(false);
     }
-  }, [search, page, pageLimit, onUnauthorized, setError, setLoading]);
+  }, [nameSearch, dateSearch,page, pageLimit, onUnauthorized, setError, setLoading]);
 
   useEffect(() => {
     fetchUsers();
@@ -36,9 +36,10 @@ export function useUserList({pageLimit = 15, onUnauthorized, setError, setLoadin
     page,
     setPage,
     totalPages,
-    search,
-    setSearch,
-
+    nameSearch,
+    setNameSearch,
+    dateSearch,
+    setDateSearch,
     fetchUsers,
   };
 

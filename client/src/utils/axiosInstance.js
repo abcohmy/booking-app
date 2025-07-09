@@ -21,9 +21,9 @@ const axiosInstance = axios.create({
 */
 axiosInstance.interceptors.request.use ((config) => {
     //token存在localStorage但必須手動加到認證上
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.token){
-        config.headers.Authorization = `Bearer ${user.token}`;
+    const token = localStorage.getItem('token');
+    if (token){
+        config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
     }, (error) => {
