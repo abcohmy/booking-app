@@ -50,7 +50,6 @@ const optionalAuthMiddleware = async (req, res, next) => {
             if (user) req.user = user;
 
         } catch (error){
-            //token無效當作沒登入
             const msg = error?.message || 'Unknown JWT error';
             console.warn(`[optionalAuthMiddleware] JWT 驗證失敗:' ${error.message}`);
         }
@@ -60,16 +59,13 @@ const optionalAuthMiddleware = async (req, res, next) => {
 
 
 
-// ...roles是 JS的剩餘參數語法，可塞任意參數使其成為一個陣列
 const authorizeRoles = (...roles) => {
-    //給router用的中介function所以以router內的req, res來當參數
     return (req, res, next) =>{
         //!req.user=>表沒過前面的authMiddleware認證
         //!roles.includes(req.user.role)=> 表非預設的使用者類別
         if (!req.user || typeof req.user.role !== 'string' || !roles.includes(req.user.role)){
             return res.status(403).json({message: '禁止訪問: 您沒有此權限。'});
         }
-        //next是express內建請express執行下一個步驟
         next();
     };
 

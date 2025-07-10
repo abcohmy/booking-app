@@ -21,7 +21,6 @@ authRouter.get('/check-username', async (req, res) => {
   }
 });
 
-// 註冊
 authRouter.post('/register', async (req, res) => {
     const {error, value} = registerSchema.validate(req.body);
     

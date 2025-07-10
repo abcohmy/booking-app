@@ -6,7 +6,6 @@ const Sequelize = require('sequelize');
 const Booking = require('../models/bookingModel');
 const User = require('../models/userModel');
 
-//測試用
 const isTest = process.env.NODE_ENV === 'test';
 
 
@@ -21,7 +20,7 @@ const sequelize = isTest ?
         dialect: process.env.DB_DIALECT,
         port: process.env.DB_PORT || 3306,
         logging: msg =>{
-            //只輸出SQL與據
+            //只輸出SQL相關
             if (msg.startsWith('Executing')){
                 console.log(`[SQL] ${new Date().toISOString()} - ${msg}`);
             }
@@ -55,8 +54,8 @@ async function initializeDb() {
     try {
         //嘗試連線, 會自動斷掉
         await sequelize.authenticate();
-        // 生產環境中須考慮: migrations
-        // 小專案可用 sync({force:true}) => 每次啟動會刪除並重建所有表
+
+        //  sync({force:true}) => 每次啟動會刪除並重建所有表
         if (isTest){
           await sequelize.sync({force:true});
         }

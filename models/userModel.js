@@ -3,35 +3,25 @@ const bcrypt = require('bcryptjs');
 const { options } = require('joi');
 
 class User extends Model {
-  /* 
-  bcrypt 密碼處理:
-  salt: Salt 是一個隨機生成的字串，與原始密碼混合後再進行hash運算(單向的加密運算)。
-
-  */
-
-  //matchPassword是自己創的 所以要用prototype前綴表明是自創 然後才能給其他程式用
-  // 因為用的是sequelize現成的class所以要加function只能外加
-
+ 
+  // 密碼加密策略：使用 bcrypt 的 salt 混合密碼後進行 hash（單向運算）
   async matchPassword(enterPassword){
     return bcrypt.compare(enterPassword, this.password);
   }
 
-  //操作類別本體需用static
+  // 操作 class 本身（非實例）的方法應使用 static，例如 initModel 註冊 schema
+
   static initModel(sequelize){
     //欄位定義
     return super.init ({
-      //即使sql有autoIncrement/primary/not null/default sequelize也需要再補一遍
+      // Sequelize 不會自動繼承 SQL 定義，需明確宣告欄位屬性（主鍵、長度、預設值等）
+
       user_id:{
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
       },
-      /*
-        //即使sql有autoIncrement/primary/not null/default sequelize也需要再補一遍
-        //不能為NULL
-        //資料完整性的後端防線
-        //檢查是否為空字串'' DataTypes.STRING 用
-      */
+      
       username: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -67,17 +57,8 @@ class User extends Model {
       tableName: 'users',
       timestamps: true,
             
-      /*
-      Sequelize Hook: 資料庫操作發生之前或之後執行自定義的function。Hook為生命週期。
-          beforeCreate / afterCreate: 在創建記錄之前/之後。
-          beforeUpdate / afterUpdate: 在更新記錄之前/之後。
-          beforeDestroy / afterDestroy: 在刪除記錄之前/之後。
-          beforeValidate / afterValidate: 在驗證模型資料之前/之後。
-          還有連接層級的 Hook，如 beforeConnect / afterConnect 等。
-          數據操作：在 before 類型的 Hook 中，你可以修改即將被操作的資料。例如，在 beforeCreate 中加密密碼。
-          function處理：在 after 類型的 Hook 中，你可以執行與資料庫操作相關的function，例如發送通知、更新快取等。
-      */
-      //創建密碼
+      
+      // 使用 beforeCreate hook，在儲存前將使用者密碼加密
       hooks: {
         beforeCreate: async (user, options) => {
           const salt = await bcrypt.genSalt(10);
@@ -86,6 +67,7 @@ class User extends Model {
       }
     });
   }
+  // 使用者可擁有多筆預約紀錄（以 profile_id 為外鍵）
   static associate(models){
     this.hasMany(models.Booking, {foreignKey: 'profile_id'});
   }

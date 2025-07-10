@@ -228,11 +228,9 @@ describe('POST mocked tests', () => {
       {message: 'phone must be numeric'},
       {message: 'date must be date type'}
     ]);
-    /*
-    //mockImplementation: 一般同步邏輯錯誤
+    
         
-    //mockRejectedValue: Sequelize async 錯誤
-    */
+    
     jest.spyOn(Booking, 'create').mockRejectedValue(mockError);
     const res = await request(app)
       .post('/api/bookings')

@@ -1,5 +1,5 @@
 //joi schema驗證: 後端防線 在sequelize之前
-//DB, sequelize自動加的像是 autoincrement/createdAt/updatedAt就不用joi驗證
+//DB, sequelize自動加的像是 autoIncrement/createdAt/updatedAt就不用joi驗證
 const Joi = require('joi');
 
 //messages內的錯誤內容須照joi內建的格式

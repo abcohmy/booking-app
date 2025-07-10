@@ -1,10 +1,4 @@
 
-/*
-  jest.fn: 可追蹤，可加其他函數控制其返回值
-  本身不返回任何值，為一個可監控函數
-  mock掉就不用開db
-  測試單個檔 npx jest 檔名
-*/
 
 const jwt = require('jsonwebtoken');
 const {authMiddleware} = require('../middleware/authMiddleware');
@@ -37,7 +31,7 @@ describe('authMiddleware', () => {
   it('should return 401 : without Token', async () => {
     await authMiddleware(req, res, next);
 
-    //toHaveBeenCalledWith是專門處理mockReturnValue用
+    //toHaveBeenCalledWith是專門處理mock function用
     //普通用toBe
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
@@ -76,13 +70,13 @@ describe('authMiddleware', () => {
 
   it('should return 401: user is not existed', async () => {
     req.headers.authorization = 'Bearer goodtoken';
-    //讓他回傳user_id:123
+   
     jest.spyOn(jwt, 'verify').mockReturnValue({user_id: 123});
-    //讓他回傳null
+    
     jest.spyOn(User, 'findByPk').mockResolvedValue(null);
 
     await authMiddleware(req, res, next);
-    //用剛得到的123去測試middleware有沒有查 =>上面設定回傳null
+    
     expect(User.findByPk).toHaveBeenCalledWith(123, {
       attributes: {exclude: ['password']},
     });

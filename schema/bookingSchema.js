@@ -14,7 +14,7 @@ const bookingSchema = Joi.object({
         'string.pattern.base': '手機號碼格式錯誤，必須09開頭共10碼數字',
         'any.required': '手機號碼必填欄位'
     }),
-
+    // 日期用iso判定較嚴格
     booking_time: Joi.date().iso().required().messages({
         'date.base': '預約時間必須是有效日期格式',
         'date.format': '預約時間必須是有效日期格式',

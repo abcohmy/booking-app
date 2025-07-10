@@ -19,6 +19,8 @@ bookingRouter.get('/', optionalAuthMiddleware, async (req, res) => {
   //搜尋用 與原先查資料邏輯沒差多少 沒必要分開
   const nameSearch = req.query.name;
   const dateSearch = req.query.date;
+  const sortBy = req.query.sort || 'updatedAt';
+  const order = [[sortBy, sortBy === 'booking_time' ? 'ASC' : 'DESC']];
 
   const where = {};
   if (nameSearch){
@@ -28,16 +30,7 @@ bookingRouter.get('/', optionalAuthMiddleware, async (req, res) => {
   }
 
   if (dateSearch) {
-    /*
-        Sequelize的Op.or的專屬寫法 [Op.or][1, 2, ...] => WHERE 1 OR 2 OR ...
-        沒包在or內的項目會被當作and
-        放進Op.or/Op.and等Sequelize運算裡要各自為一個物件/條件表達式
-    */
-   /*
-          Sequelize.fn=>轉成只有日期沒時間的格式
-          Sequelize.col('booking_time')=> 對應booking_time欄位
-          Sequelize.where(fnResult, value) =>WHERE fnResult = value
-          */
+    
     where[Op.and] = Sequelize.where(Sequelize.fn('DATE',
        Sequelize.col('booking_time')), 
        dateSearch
@@ -50,7 +43,7 @@ bookingRouter.get('/', optionalAuthMiddleware, async (req, res) => {
     //req在middleware被加入req.user, user為sequelize物件(user model)
     //req在整個request能被隨意加入屬性
     if (!req.user){
-        //未登入
+       
         attributes = [ 'booking_id', 'name', 'booking_time'];
     } else if (req.user.role === 'admin'){
         attributes = undefined; // Sequelize預設抓全部欄位
@@ -66,7 +59,7 @@ bookingRouter.get('/', optionalAuthMiddleware, async (req, res) => {
           where,
           limit,
           offset,
-          order:[['updatedAt', 'DESC']]
+          order
         });
         res.status(200).json({
           data: rows,
@@ -151,9 +144,7 @@ bookingRouter.put('/:id', authMiddleware, authorizeRoles('admin'),async (req, re
         if (existing_time){
           return res.status(400).json({message: '此時段已被預約，請選擇其他時間。'});
         }
-        //sequelize update回傳一組資料 其中第一個是更新數(在此自己設定成affectedCount)
-        // JavaScript 陣列解構賦值可只取第一個，剩下拋棄
-        //要確認更新得用.change 才能確認有沒有被更動
+        
         await Booking.update({
             name,
             phone,

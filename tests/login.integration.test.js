@@ -5,13 +5,7 @@ const {setupTestDb, sequelize} = require('./setupTestDB');
 const User = require('../models/userModel');
 
 
-/*
-  jest測試專用函式
-  beforeEach 每個測試之前執行
-  afterEach
-  beforeAll 所有測試之前執行一次
-  afterAll
-*/
+
 
 beforeAll(async () => {
   process.env.JWT_SECRET = 'testsecret123';
@@ -23,14 +17,14 @@ afterAll (async () => {
 
 });
 
-//測試login router
+
 describe('不使用mock的login token整合測試', () => {
 
   beforeEach(() => {
     //確保不配其他測試檔案有mock汙染
     jest.resetModules();
   });
-  //登入成功時
+  
   it ('should login successfully with valid credentials', async () =>{
     const res = await request(app)
       .post('/api/auth/login')
