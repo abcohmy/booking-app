@@ -29,8 +29,10 @@ export function useUserForm({ onSuccess, onError, setLoading}){
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = userService.validateUserData(formData);
-    if (err) return onError(err);
-
+    if (err) {
+      onError(err);
+      return ;
+    }
     try {
       setLoading(true);
       const payload = userService.formatToServer(formData);

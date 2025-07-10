@@ -21,6 +21,8 @@ export default function UserPage() {
     setNameSearch,
     dateSearch,
     setDateSearch,
+    sortBy,
+    setSortBy,
     currentUser,
     isAdmin,
     error,
@@ -38,7 +40,7 @@ export default function UserPage() {
     <div className='UserPage'>
       <Dashboard currentUser={currentUser} onLogout={handleLogout} />
       <div className='min-h-[40px] flex items-center justify-center'>
-        {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded w-full text-center'>錯誤: {error}</div>}
+        {error && <div data-testid='error-box' className='bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded w-full text-center'>錯誤: {error}</div>}
         {showLoading && <div className='bg-blue-100 text-blue-800 px-4 py-2 rounded w-full text-center' >載入中...</div>}
       </div>
       <div className='p-6'>
@@ -49,6 +51,8 @@ export default function UserPage() {
               setNameSearch={setNameSearch} 
               dateSearch={dateSearch}
               setDateSearch={setDateSearch}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
               setPage={setPage}/>
           </div>
           <div className='w-[15%] h-15 p-4'>

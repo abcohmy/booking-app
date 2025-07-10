@@ -1,3 +1,4 @@
+// 載入.env 隱藏的變數資料
 require('dotenv-flow').config();
 
 const express = require('express');

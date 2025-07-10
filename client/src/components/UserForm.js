@@ -16,7 +16,7 @@ export default function UserForm({
         <h2 className='text-xl font-semibold text-gray-800 mb-4'>
           {isEditing ? '編輯用戶' : '新增用戶'}
           </h2>
-        <form onSubmit={onSubmit} className='space-y-4'>
+        <form onSubmit={onSubmit} data-testid='user-form' className='space-y-4'>
           <div className='space-y-2'>
             <LabelInput
               id='name'
@@ -61,7 +61,7 @@ export default function UserForm({
             )}
           </div>
           <div className='mt-4 flex items-center justify-between'>
-            <button type='submit'
+            <button type='submit' data-testid='submit-btn'
               className='bg-blue-500 text-white px-4 h-10 rounded-md hover:bg-blue-600 transition'>
                 {isEditing ? '更新用戶' : '新增用戶'}</button>
 
@@ -92,7 +92,7 @@ function LabelInput({
   pattern,
 }) {
   return (
-    <>
+    <div className='space-y-1'>
       <label htmlFor={id} className='block text-sm text-gray-700'>
         {label}
       </label>
@@ -109,6 +109,6 @@ function LabelInput({
         //focus:ring-2 =>Tailwind提供的ring視覺系統，額外一個內陰影邊框 2px ring-blue=>ring那圈的顏色
         className='w-full h-10 px-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
       />  
-    </>
+    </div>
   );
 }

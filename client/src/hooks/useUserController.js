@@ -44,6 +44,8 @@ export default function useUserController() {
     setNameSearch,
     dateSearch,
     setDateSearch,
+    sortBy,
+    setSortBy,
     fetchUsers,
   } = useUserList({
     pageLimit: 15, 
@@ -83,7 +85,10 @@ export default function useUserController() {
   };
 
   const getErrorMessage = (err, fallback = '發生未知錯誤') => {
-    return err?.response?.data?.message || err?.message || fallback;
+    if (typeof err === 'string') return err;
+    if (err?.response?.data?.message) return err?.response?.data?.message;
+    if (err?.message) return err.message;
+    return fallback;
   };
 
 
@@ -108,6 +113,8 @@ export default function useUserController() {
     setNameSearch,
     dateSearch,
     setDateSearch,
+    sortBy,
+    setSortBy,
 
     fetchUsers,
     handleDeleteUser,
