@@ -31,6 +31,7 @@ bookingRouter.get('/', optionalAuthMiddleware, async (req, res) => {
 
   if (dateSearch) {
     
+    //Sequelize.fn=>轉成只有日期沒時間的格式
     where[Op.and] = Sequelize.where(Sequelize.fn('DATE',
        Sequelize.col('booking_time')), 
        dateSearch
